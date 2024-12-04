@@ -4,8 +4,28 @@ Son una característica que permite añadir dependencias o librerías para ser u
 
 ## Pre requisitos
 
-Tener instalado Python en nuestra computadora.
-Tener instalado WSL (Windows Subsystem for Linux).
+Tener instalado WSL (Windows Subsystem for Linux), se debe ejecutar en powershell como administrador, luego ejecutar wsl --install, luego reiniciar, luego podremos ejecutar ubuntu cómo si fuera una aplicación. La primera vez nos solicitará un usuario y contraseña para nuestro sistema operativo Linux.
+
+Tener instalado Python en nuestra computadora. 
+Para instalar Python en WSL, haremos lo siguiente
+```
+sudo apt update && apt upgrade -y
+sudo apt upgrade python3
+sudo apt install python3-pip
+```
+
+Crearemos un entorno virtual para poder instalar las librerias que necesitamos para la capa.
+
+```
+sudo apt install python3-venv
+python3 -m venv .venv
+```
+
+Activar el venv
+```
+source .venv/bin/activate
+```
+
 ## Cómo se crean?
 
 Las librerías que podemos subir a los layers de Lambda tienen algunos requisitos básicos, deben ser un .zip y deben tener todos sus folders dentro de una carpeta llamada python (con todas minúsculas). Una forma sencilla de hacerlo es desde el WSL si usamos Windows.
