@@ -14,6 +14,11 @@ sudo apt upgrade python3
 sudo apt install python3-pip
 ```
 
+Tener instalado el zip en Ubuntu
+```
+sudo apt install zip
+```
+
 Crearemos un entorno virtual para poder instalar las librerias que necesitamos para la capa.
 
 ```
