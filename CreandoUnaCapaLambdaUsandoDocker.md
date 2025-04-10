@@ -1,4 +1,4 @@
-#Creando una Capa de AWS Lambda con Geopandas para Python 3.12 Usando Docker (¡Guía para Principiantes!)
+# Creando una Capa de AWS Lambda con Geopandas para Python 3.12 Usando Docker (¡Guía para Principiantes!)
 
 ¿Necesitas usar Geopandas en tus funciones Lambda de AWS con Python 3.12, pero te encuentras con problemas de compatibilidad? ¡No te preocupes! Crear una "capa" (Lambda Layer) personalizada es la solución. Las capas te permiten empaquetar librerías y dependencias para que tus funciones Lambda las puedan usar sin exceder los límites de tamaño.
 
@@ -9,31 +9,33 @@ Usaremos Docker para asegurarnos de que todo sea compatible con el entorno de ej
 Tener Docker instalado en tu computadora.
 Una cuenta de AWS.
 La consola de AWS (AWS CLI) configurada (opcional, pero útil).
-Paso 1: Prepara tu Carpeta de Proyecto    
+
+## Paso 1: Prepara tu Carpeta de Proyecto    
 
 Crea una carpeta nueva en tu computadora. Llamémosla geo-lambda-layer.   
 Dentro de esta carpeta, crea un archivo llamado requirements.txt.   
-Paso 2: Define las Dependencias (requirements.txt)    
+
+## Paso 2: Define las Dependencias (requirements.txt)    
 
 Abre el archivo requirements.txt y añade las librerías de Python que necesitarás. Para Geopandas, usualmente basta con poner:
 
-Plaintext
-
+```
 # requirements.txt
 pandas
 geopandas
 # Nota: Geopandas instalará automáticamente otras librerías necesarias como shapely, fiona, pyproj, numpy, etc. [cite: 5]
 # Puedes especificar versiones si lo necesitas, ej: geopandas==0.14.3 [cite: 5]
+```
 ¡Guarda el archivo!    
 
-Paso 3: Crea el Dockerfile    
+## Paso 3: Crea el Dockerfile    
 
 En la misma carpeta geo-lambda-layer, crea un archivo llamado Dockerfile (¡sin extensión!).  Este archivo le dice a Docker cómo construir nuestro entorno.   
 
 Pega el siguiente contenido en tu Dockerfile:
 
 Dockerfile
-
+```
 # Dockerfile [cite: 7]
 
 # Usamos la imagen base oficial de AWS Lambda para Python 3.12 [cite: 7]
@@ -103,53 +105,57 @@ RUN echo "Reducción de tamaño finalizada." [cite: 19]
 
 # Opcional: Limpiar caché de pip [cite: 20]
 RUN rm -rf /root/.cache/pip
-
 # --- fin del Dockerfile --- [cite: 20]
-Paso 4: Construye la Imagen Docker y Extrae la Capa
+```
+## Paso 4: Construye la Imagen Docker y Extrae la Capa
 
 Abre tu terminal o línea de comandos, navega hasta la carpeta geo-lambda-layer y ejecuta estos comandos:    
 
 Construir la imagen Docker: (Esto puede tardar un poco la primera vez)
-
 Bash
-
+```
 docker build -t geo-layer-builder . [cite: 20]
+```
 Crear una carpeta para la salida:
-
 Bash
-
+```
 mkdir layer-output
+```
 Ejecutar un contenedor temporal para copiar los archivos de la capa:
 
 Bash
-
+```
 # En Linux/macOS:
 docker run --rm --entrypoint "" -v "$(pwd)/layer-output:/output" geo-layer-builder cp -r /opt/python /output/ [cite: 21]
 # En Windows (PowerShell):
 # docker run --rm --entrypoint "" -v "${PWD}/layer-output:/output" geo-layer-builder cp -r /opt/python /output/
 # En Windows (CMD):
 # docker run --rm --entrypoint "" -v "%CD%/layer-output:/output" geo-layer-builder cp -r /opt/python /output/
-Paso 5: Empaqueta la Capa (Archivo ZIP)
+```
+## Paso 5: Empaqueta la Capa (Archivo ZIP)
 
 Entra a la carpeta de salida:
 Bash
-
+```
 cd layer-output [cite: 21]
+```
 Verás una carpeta llamada python. Esta es la estructura que Lambda necesita.
 Crea el archivo ZIP:
 Bash
-
+```
 # En Linux/macOS:
 zip -r ../geo-lambda-layer.zip python [cite: 21]
 # En Windows (si no tienes 'zip', puedes usar la compresión integrada de Windows o instalar '7-Zip'):
 # Click derecho en la carpeta 'python' -> Enviar a -> Carpeta comprimida (en zip). Renombra el ZIP a 'geo-lambda-layer.zip' y muévelo a la carpeta 'geo-lambda-layer'.
+```
 Regresa a la carpeta principal (opcional):
 Bash
-
+```
 cd ..
+```
 Ahora deberías tener un archivo geo-lambda-layer.zip en tu carpeta geo-lambda-layer.
 
-Paso 6: Sube la Capa a AWS Lambda    
+## Paso 6: Sube la Capa a AWS Lambda    
 
 Ve a la consola de AWS Lambda.   
 En el menú de la izquierda, haz clic en "Capas" (Layers).   
@@ -159,14 +165,16 @@ Sube el archivo geo-lambda-layer.zip que acabas de crear.  
 Selecciona la "Arquitectura compatible" (x86_64 o arm64, la que usaste en el Dockerfile).   
 Selecciona el "Tiempo de ejecución compatible" (Python 3.12).   
 Haz clic en "Crear" (Create).   
-Paso 7: Asocia la Capa a tu Función Lambda    
+
+## Paso 7: Asocia la Capa a tu Función Lambda    
 
 Ve a la página de configuración de tu función Lambda en la consola.   
 Baja hasta la sección "Capas" (Layers) y haz clic en "Agregar una capa" (Add a layer).   
 Elige "Capas personalizadas" (Custom layers).   
 Selecciona la capa que acabas de crear (GeopandasPython312) y la versión (probablemente la 1).   
 Haz clic en "Agregar" (Add).   
-Paso 8: ¡Configuración Final Importante! Variable de Entorno    
+
+## Paso 8: ¡Configuración Final Importante! Variable de Entorno    
 
 Debido a cómo Geopandas y sus dependencias buscan librerías del sistema (como libexpat.so que copiamos antes), necesitamos decirle a Lambda dónde encontrarla dentro de la capa.
 
