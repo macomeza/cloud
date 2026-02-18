@@ -113,10 +113,15 @@ RUN rm -rf /root/.cache/pip
 Abre tu terminal o línea de comandos, navega hasta la carpeta geo-lambda-layer y ejecuta estos comandos:    
 
 Construir la imagen Docker: (Esto puede tardar un poco la primera vez)
-Bash
+
 ```
-docker build -t geo-layer-builder . 
+docker build -t geo-layer-builder .
 ```
+Si usaremos arquitectura ARM se debe construir la imagen con este comando
+```
+docker build --platform linux/amd64 -t geo-layer-builder .
+```
+
 Crear una carpeta para la salida:
 Bash
 ```
@@ -133,6 +138,12 @@ docker run --rm --entrypoint "" -v "$(pwd)/layer-output:/output" geo-layer-build
 # En Windows (CMD):
 # docker run --rm --entrypoint "" -v "%CD%/layer-output:/output" geo-layer-builder cp -r /opt/python /output/
 ```
+
+Cambiar los permisos
+```
+sudo chown -R $USER:$USER layer-output/
+```
+
 ## Paso 5: Empaqueta la Capa (Archivo ZIP)
 
 Entra a la carpeta de salida:
@@ -156,13 +167,26 @@ cd ..
 ```
 Ahora deberías tener un archivo geo-lambda-layer.zip en tu carpeta geo-lambda-layer.
 
+Probaremos la capa previo a cargarla a AWS
+```
+# Listar el contenido del zip para asegurar que la estructura es /python/lib/...
+unzip -l geo-lambda-layer.zip | head -n 10
+```
+
 ## Paso 6: Sube la Capa a AWS Lambda    
 
 Ve a la consola de AWS Lambda.   
 En el menú de la izquierda, haz clic en "Capas" (Layers).   
 Haz clic en "Crear capa" (Create layer).   
 Dale un nombre descriptivo, por ejemplo: GeopandasPython312.   
-Sube el archivo geo-lambda-layer.zip que acabas de crear.   
+Sube el archivo geo-lambda-layer.zip que acabas de crear. 
+
+### El ZIP es muy grande (> 50MB)
+Si al intentar subir el archivo a AWS recibes un error de tamaño, no lo subas directamente. 
+1. Sube el `.zip` a un bucket de **Amazon S3**.
+2. Copia la "URL del objeto".
+3. En la creación de la Capa, selecciona "Cargar un archivo desde Amazon S3" y pega la URL.
+
 Selecciona la "Arquitectura compatible" (x86_64 o arm64, la que usaste en el Dockerfile).   
 Selecciona el "Tiempo de ejecución compatible" (Python 3.12).   
 Haz clic en "Crear" (Create).   
